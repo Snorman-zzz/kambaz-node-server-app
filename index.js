@@ -8,19 +8,48 @@ import session from "express-session";
 import CourseRoutes from "./Kambaz/Courses/routes.js";
 import ModuleRoutes from "./Kambaz/Modules/routes.js";
 import AssignmentRoutes from "./Kambaz/Assignments/routes.js";
+
 const app = express()
-UserRoutes(app);
-CourseRoutes(app);
+
+// 1. CORS must come FIRST, before any routes
 app.use(cors({
     credentials: true,
-    origin: process.env.NETLIFY_URL || "http://localhost:5173",
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        const allowedOrigins = [
+            process.env.NETLIFY_URL,
+            process.env.NETLIFY_URL?.replace(/\/$/, ''), // Remove trailing slash
+            "http://localhost:5173",
+            /^https:\/\/.*--aquamarine-naiad-c8742e\.netlify\.app$/
+        ];
+        
+        const isAllowed = allowedOrigins.some(allowed => {
+            if (typeof allowed === 'string') {
+                return origin === allowed;
+            } else if (allowed instanceof RegExp) {
+                return allowed.test(origin);
+            }
+            return false;
+        });
+        
+        if (isAllowed) {
+            callback(null, true);
+        } else {
+            console.log('CORS blocked origin:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
     }
-));
+}));
+
+// 2. Session configuration
 const sessionOptions = {
     secret: process.env.SESSION_SECRET || "kambaz",
     resave: false,
     saveUninitialized: false,
 };
+
 if (process.env.NODE_ENV !== "development") {
     sessionOptions.proxy = true;
     sessionOptions.cookie = {
@@ -30,12 +59,17 @@ if (process.env.NODE_ENV !== "development") {
     };
 }
 app.use(session(sessionOptions));
+
+// 3. Body parsing middleware
 app.use(express.json());
-Lab5(app)
+
+// 4. Routes come LAST
 UserRoutes(app);
 CourseRoutes(app);
+Lab5(app)
 EnrollmentsRoutes(app);
 ModuleRoutes(app);
 AssignmentRoutes(app);
 Hello(app)
+
 app.listen(process.env.PORT || 4000)
