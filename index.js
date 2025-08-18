@@ -76,4 +76,12 @@ ModuleRoutes(app);
 AssignmentRoutes(app);
 Hello(app)
 
+// 5. Healthcheck and root endpoints
+app.get("/health", (req, res) => {
+    res.status(200).send("healthy");
+});
+app.get("/", (req, res) => {
+    res.status(200).send("OK");
+});
+
 app.listen(process.env.PORT || 4000)
