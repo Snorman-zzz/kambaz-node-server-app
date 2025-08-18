@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import express from 'express'
 import Hello from "./Hello.js"
 import Lab5 from "./Lab5/index.js";
@@ -10,8 +11,18 @@ import ModuleRoutes from "./Kambaz/Modules/routes.js";
 import AssignmentRoutes from "./Kambaz/Assignments/routes.js";
 import mongoose from "mongoose";
 
-const CONNECTION_STRING = process.env.MONGO_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz"
-mongoose.connect(CONNECTION_STRING);
+let CONNECTION_STRING = process.env.MONGO_CONNECTION_STRING;
+if (CONNECTION_STRING && CONNECTION_STRING.includes("MONGO_CONNECTION_STRING=")) {
+    CONNECTION_STRING = CONNECTION_STRING.split("MONGO_CONNECTION_STRING=").pop();
+}
+if (!CONNECTION_STRING) {
+    CONNECTION_STRING = "mongodb://127.0.0.1:27017/kambaz";
+}
+mongoose
+    .connect(CONNECTION_STRING)
+    .catch((err) => {
+        console.error("Mongo connection error:", err?.message || err);
+    });
 const app = express()
 
 // 1. CORS must come FIRST, before any routes
