@@ -20,28 +20,29 @@ app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-        
+
         const allowedOrigins = [
-            process.env.NETLIFY_URL,
-            process.env.NETLIFY_URL?.replace(/\/$/, ''), // Remove trailing slash
+            process.env.FRONTEND_URL?.replace(/\/$/, ''),
+            process.env.NETLIFY_URL?.replace(/\/$/, ''),
             "http://localhost:5173",
-            /^https:\/\/.*--aquamarine-naiad-c8742e\.netlify\.app$/
+            /^https?:\/\/.*\.netlify\.app$/,
+            /^https?:\/\/.*\.onrender\.com$/
         ];
-        
+
         const isAllowed = allowedOrigins.some(allowed => {
-            if (typeof allowed === 'string') {
+            if (typeof allowed === 'string' && allowed) {
                 return origin === allowed;
             } else if (allowed instanceof RegExp) {
                 return allowed.test(origin);
             }
             return false;
         });
-        
+
         if (isAllowed) {
             callback(null, true);
         } else {
             console.log('CORS blocked origin:', origin);
-            callback(new Error('Not allowed by CORS'));
+            callback(null, false);
         }
     }
 }));
